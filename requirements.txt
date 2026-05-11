@@ -8,3 +8,4 @@ Pillow
 numpy
 matplotlib
 scikit-learn
+python-multipart
