@@ -118,10 +118,47 @@ def get_dataloaders(
 
 # ── Quick sanity check ──────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    from collections import Counter
+
     loaders = get_dataloaders(batch_size=8, num_workers=0)
 
+    # ── Basic shapes ───────────────────────────────────────────────────────────
     images, labels = next(iter(loaders["train"]))
-    print(f"[train] batch shape : {images.shape}")    # (8, 3, 224, 224)
-    print(f"[train] labels shape: {labels.shape}")    # (8, 14)  — multi-label
-    print(f"num classes : {loaders['num_classes']}")  # 14
-    print(f"label names : {loaders['label_names']}")
+    print(f"[train] batch shape  : {images.shape}")       # (8, 3, 224, 224)
+    print(f"[train] labels shape : {labels.shape}")       # (8, 14)
+    print(f"num classes          : {loaders['num_classes']}")
+    print(f"label names          : {loaders['label_names']}")
+
+    # ── Split sizes ────────────────────────────────────────────────────────────
+    print(f"\n[split sizes]")
+    print(f"  train : {len(loaders['train'].dataset)}")   # 78468
+    print(f"  val   : {len(loaders['val'].dataset)}")     # 11219
+    print(f"  test  : {len(loaders['test'].dataset)}")    # 22433
+
+    # ── Pixel value range after normalization ──────────────────────────────────
+    print(f"\n[pixel stats]")
+    print(f"  min : {images.min():.3f}")
+    print(f"  max : {images.max():.3f}")
+    print(f"  mean: {images.mean():.3f}")
+
+    # ── Label distribution (class imbalance check) ─────────────────────────────
+    print(f"\n[label distribution on first batch]")
+    for i, name in enumerate(loaders["label_names"]):
+        count = int(labels[:, i].sum().item())
+        print(f"  {name:<20} : {count}/8 positive")
+
+    # ── Show sample images ─────────────────────────────────────────────────────
+    fig, axes = plt.subplots(2, 4, figsize=(12, 6))
+    for i, ax in enumerate(axes.flat):
+        # un-normalize for display: x = x*0.5 + 0.5
+        img = images[i].permute(1, 2, 0) * 0.5 + 0.5
+        img = img.numpy().clip(0, 1)
+        ax.imshow(img[:, :, 0], cmap="gray")  # show 1 channel (they're identical)
+        active = [loaders["label_names"][j] for j in range(14) if labels[i, j] == 1]
+        ax.set_title("\n".join(active) if active else "No Finding", fontsize=7)
+        ax.axis("off")
+    plt.tight_layout()
+    plt.savefig("figures/sample_batch.png", dpi=150)
+    plt.show()
+    print("\nSample batch saved to figures/sample_batch.png")
