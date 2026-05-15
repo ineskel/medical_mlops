@@ -1,0 +1,14 @@
+artifact_uri: /content/mlruns/688180848721114463/32540dd2c52c4899a8f7747cd904f05b/artifacts
+end_time: 1778784438068
+entry_point_name: ''
+experiment_id: '688180848721114463'
+lifecycle_stage: active
+run_id: 32540dd2c52c4899a8f7747cd904f05b
+run_name: mobilenet_v2_linear_probe
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1778783566855
+status: 3
+tags: []
+user_id: root

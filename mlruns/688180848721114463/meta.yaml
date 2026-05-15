@@ -1,0 +1,8 @@
+artifact_location: /content/mlruns/688180848721114463
+creation_time: 1778783552928
+experiment_id: '688180848721114463'
+last_update_time: 1778783552928
+lifecycle_stage: active
+name: chestmnist_baseline
+trace_location: null
+workspace: default

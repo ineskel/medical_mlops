@@ -1,0 +1,14 @@
+artifact_uri: /content/mlruns/688180848721114463/e7db32b8df2e450f957b4eaed70007ed/artifacts
+end_time: 1778785211700
+entry_point_name: ''
+experiment_id: '688180848721114463'
+lifecycle_stage: active
+run_id: e7db32b8df2e450f957b4eaed70007ed
+run_name: resnet18_linear_probe
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1778784438734
+status: 3
+tags: []
+user_id: root
