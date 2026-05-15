@@ -217,3 +217,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+*.pt          # model weights (too large)
+*.pth
+*.h5
+__pycache__/
+.env
+mlruns/       # MLflow logs go to Drive, not GitHub
+*.ipynb_checkpoints
+data/         # dataset never on GitHub
+experiments/mlflow.db
