@@ -224,3 +224,27 @@ __pycache__/
 .env
 *.ipynb_checkpoints
 data/         # dataset never on GitHub
+# ML model weights — restore via scripts/restore_checkpoints.py
+models/
+*.pth
+*.pt
+*.h5
+
+# Dataset — downloaded automatically via MedMNIST
+data/
+
+# Hospital simulation images — regenerate via scripts/export_test_images.py
+test_images/
+
+# Inference logs
+logs/
+
+# MLflow local run files (keep experiments/mlflow.db but not mlruns/)
+mlruns/
+
+# Streamlit
+.streamlit/
+
+# Environment
+.env
+venv/

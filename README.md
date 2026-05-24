@@ -1,128 +1,162 @@
-# Topic 10 – MLOps Pipeline for Medical Model Deployment
+# Topic 10 — MLOps Pipeline for Medical Model Deployment
 
-End-to-end pipeline to train, version, deploy, and monitor a medical imaging model
-on **ChestMNIST** (chest X-ray multi-label classification, 14 pathologies).  
-Tools: **MLflow** · **FastAPI** · **PyTorch** · **MedMNIST**
+End-to-end MLOps pipeline for training, versioning, deploying, and **monitoring** a medical imaging model on **ChestMNIST** (14-class multi-label chest X-ray classification).
+
+**Team:** F6-Score · ESI Algiers · Advanced Machine Learning 2025–2026  
+**Stack:** PyTorch · MedMNIST · MLflow · FastAPI · Streamlit · Python 3.11
+
+---
+
+## Results Summary
+
+| Model            | Strategy       | Test AUC   | F1 tuned | ms/img   |
+| ---------------- | -------------- | ---------- | -------- | -------- |
+| MobileNetV2      | Linear probe   | 0.6852     | —        | —        |
+| ResNet18         | Linear probe   | 0.6865     | —        | —        |
+| MobileNetV2      | Full fine-tune | **0.7900** | 0.2360   | **58.6** |
+| ResNet18         | Full fine-tune | 0.7820     | 0.2331   | 87.3     |
+| Yang et al. SOTA | Full fine-tune | 0.7707     | —        | —        |
+
+Both fine-tuned models exceed SOTA. MobileNetV2 is deployed (higher AUC, 1.5× faster, 5× fewer params).
 
 ---
 
 ## Project Structure
 
-```
-project/
-├── data/                            ← ChestMNIST auto-downloaded here
+medical_mlops/
+├── data/ ← ChestMNIST auto-downloaded here (gitignored)
 ├── notebooks/
-│   ├── W2_data_exploration.ipynb
-│   └── W2_baseline_experiments.ipynb
+│ ├── W2_data_exploration.ipynb
+│ ├── W2_baseline_experiments.ipynb
+│ ├── W3_finetuning.ipynb
+│ └── W3_evaluation.ipynb
 ├── src/
-│   ├── data_loader.py
-│   ├── train.py
-│   ├── evaluate.py
-│   └── serve.py
+│ ├── api.py ← FastAPI serving (3 endpoints)
+│ ├── config.py
+│ ├── data_loader.py
+│ └── mlflow_setup.py
+├── dashboard/
+│ └── app.py ← Streamlit monitoring dashboard
+├── scripts/
+│ ├── export_test_images.py ← Exports hospital simulation images
+│ └── restore_checkpoints.py ← Restores .pth from MLflow artifacts
 ├── experiments/
-│   └── mlruns/                      ← MLflow runs saved here
-├── models/                          ← saved checkpoints
+│ └── mlflow.db ← All experiment runs (committed)
+├── models/ ← .pth checkpoints (gitignored, restore via script)
+├── test_images/ ← Hospital simulation images (gitignored, regenerate)
+│ ├── hospital_A/ ← Reference (clean)
+│ ├── hospital_B/ ← Brightness degradation (covariate shift)
+│ ├── hospital_C/ ← Resolution drop at img 30 (sudden shift)
+│ └── hospital_D/ ← Rare class oversampling (label shift)
+├── logs/
+│ └── inference_log.jsonl ← Live inference log (gitignored)
+├── figures/ ← All W2+W3 plots
 ├── reports/
-├── figures/
-├── config.py
+│ ├── W2_baseline_report.pdf
+│ └── W3_experiments_summary.pdf
 ├── requirements.txt
+├── Dockerfile
 └── README.md
-```
 
 ---
 
-## Environment Setup
-
-### 1. Create and activate the virtual environment
+## Setup
 
 ```bash
+# 1. Clone and create environment
 python -m venv venv
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # Linux/macOS
 
-# Linux / macOS
-source venv/bin/activate
-
-# Windows
-venv\Scripts\activate
-```
-
-### 2. Install dependencies
-
-```bash
+# 2. Install dependencies
 pip install -r requirements.txt
+
+# 3. Restore model checkpoints from MLflow
+python scripts/restore_checkpoints.py
+
+# 4. Generate hospital simulation images
+python scripts/export_test_images.py
 ```
 
 ---
 
 ## Dataset
 
-ChestMNIST is part of the [MedMNIST](https://medmnist.com/) benchmark.  
-**No manual download needed** — it is fetched automatically on first run:
+ChestMNIST — 14-class multi-label chest X-ray classification (MedMNIST benchmark).  
+Train: 78,468 · Val: 11,219 · Test: 22,433 · Native resolution: 28×28 → resized to 224×224.
+
+Downloaded automatically on first run:
 
 ```python
-from src.data_loader import get_dataloaders
-loaders = get_dataloaders(download=True, root="data")
-```
-
-Data is saved to `data/` and reused on subsequent runs.
-
----
-
-## Using the DataLoader
-
-```python
-from src.data_loader import get_dataloaders
-
-loaders = get_dataloaders(
-    image_size  = 224,    # resize to 224×224 for pretrained backbones
-    batch_size  = 32,
-    num_workers = 4,      # set to 0 on Windows
-    root        = "data",
-)
-
-for images, labels in loaders["train"]:
-    # images : (B, 3, 224, 224) — grayscale converted to 3-channel
-    # labels : (B, 14)          — multi-label binary
-    ...
-
-print(loaders["num_classes"])   # 14
-print(loaders["label_names"])   # ['Atelectasis', 'Cardiomegaly', ...]
-```
-
-Sanity check from the command line:
-
-```bash
-python src/data_loader.py
-# [train] batch shape : torch.Size([8, 3, 224, 224])
-# [train] labels shape: torch.Size([8, 14])
+from medmnist import ChestMNIST
+ds = ChestMNIST(split="test", download=True)
 ```
 
 ---
 
-## MLflow
+## Running the Full System
 
-Start the tracking server (runs saved in `experiments/mlruns/`):
+### 1 — MLflow experiment tracking
 
 ```bash
-mlflow ui --backend-store-uri experiments/mlruns --port 5000
+mlflow ui --backend-store-uri sqlite:///experiments/mlflow.db --port 5000
+# Open http://localhost:5000
 ```
 
-Open http://localhost:5000.  
-In any script, point MLflow to this directory:
+### 2 — FastAPI serving
 
-```python
-import mlflow
-mlflow.set_tracking_uri("experiments/mlruns")
-mlflow.set_experiment("chestmnist-baseline")
+```bash
+uvicorn src.api:app --port 8000
+# Open http://localhost:8000/docs
+```
+
+Endpoints:
+
+- `GET /health` — model load status
+- `POST /predict/{model_name}` — inference with tuned thresholds (`mobilenet` or `resnet`)
+- `POST /predict/ab` — randomised A/B routing between both models
+
+### 3 — Monitoring dashboard
+
+```bash
+streamlit run dashboard/app.py
+# Open http://localhost:8501
+```
+
+Simulates 4 hospitals with different acquisition profiles, streams images to the API, and runs a **Page-Hinkley Test** (δ=0.005, λ=50) per hospital to detect drift in real time. Drift events are logged to MLflow with `hospital_id` and `drift_type` tags.
+
+### 4 — Docker
+
+```bash
+docker build -t chestmnist-api .
+docker run -p 8000:8000 chestmnist-api
 ```
 
 ---
 
-## FastAPI
+## MLOps Practices Implemented
 
-Start the model serving API:
+| Practice                         | Implementation                                                           |
+| -------------------------------- | ------------------------------------------------------------------------ |
+| Experiment tracking              | MLflow — params, per-epoch metrics, per-class AUC, artifacts             |
+| Model versioning                 | Checkpoints as MLflow artifacts, restore via script                      |
+| Reproducibility                  | Seed 42, pinned requirements.txt, official MedMNIST splits               |
+| Serving                          | FastAPI with input validation, tuned thresholds, latency logging         |
+| A/B testing                      | `/predict/ab` endpoint — random routing between MobileNetV2 and ResNet18 |
+| Training-serving skew prevention | Identical preprocessing pipeline in training and API                     |
+| Drift detection                  | Page-Hinkley Test on live confidence stream, per-hospital                |
+| Drift logging                    | MLflow runs with `hospital_id`, `drift_type`, `pht_value` tags           |
+| Inference logging                | JSONL log at `logs/inference_log.jsonl`                                  |
+| Containerisation                 | Dockerfile for API serving                                               |
 
-```bash
-uvicorn src.serve:app --host 0.0.0.0 --port 8000 --reload
-```
+---
 
-Interactive docs available at http://localhost:8000/docs.
+## References
+
+- Yang et al., MedMNIST v2, Scientific Data 2023
+- Sandler et al., MobileNetV2, CVPR 2018
+- He et al., ResNet, CVPR 2016
+- Sculley et al., Hidden Technical Debt in ML Systems, NeurIPS 2015
+- Zaharia et al., MLflow, IEEE Data Engineering Bulletin 2018
+- Bifet & Gavalda, ADWIN, SDM 2007
+- Gama et al., DDM, 2004
