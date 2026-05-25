@@ -59,6 +59,7 @@ medical_mlops/
 ├── Dockerfile
 └── README.md
 ```
+
 ---
 
 ## Setup
@@ -77,7 +78,7 @@ python scripts/restore_checkpoints.py
 
 # 4. Generate hospital simulation images
 python scripts/export_test_images.py
-````
+```
 
 ---
 
@@ -160,4 +161,4 @@ docker run -p 8000:8000 chestmnist-api
 - Sculley et al., Hidden Technical Debt in ML Systems, NeurIPS 2015
 - Zaharia et al., MLflow, IEEE Data Engineering Bulletin 2018
 - Bifet & Gavalda, ADWIN, SDM 2007
-- Gama et al., DDM, 2004
+- Gama et al., DDM, 200
