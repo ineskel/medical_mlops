@@ -1,0 +1,65 @@
+name: MLOps CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Validate imports
+        run: |
+          python -c "from src.logger import log_request; print('logger OK')"
+          python -c "import src.config; print('config OK')"
+          python -c "from src.api import app; print('API imports OK')"
+
+      - name: Check MLflow DB exists
+        run: |
+          python -c "
+          import sqlite3, pathlib
+          db = pathlib.Path('experiments/mlflow.db')
+          assert db.exists(), 'mlflow.db missing'
+          conn = sqlite3.connect(db)
+          tables = conn.execute(\"SELECT name FROM sqlite_master WHERE type='table'\").fetchall()
+          print(f'MLflow DB OK — {len(tables)} tables')
+          conn.close()
+          "
+
+      - name: Check requirements are pinned
+        run: |
+          python -c "
+          lines = open('requirements.txt').readlines()
+          unpinned = [l.strip() for l in lines if l.strip() and '==' not in l and not l.startswith('#')]
+          if unpinned: print(f'WARNING unpinned: {unpinned}')
+          else: print('All requirements pinned OK')
+          "
+
+      - name: Validate project structure
+        run: |
+          python -c "
+          from pathlib import Path
+          required = ['src/api.py','src/logger.py','src/config.py',
+                      'dashboard/app.py','scripts/register_model.py',
+                      'scripts/restore_checkpoints.py',
+                      'scripts/export_test_images.py',
+                      'experiments/mlflow.db','requirements.txt',
+                      'Dockerfile','README.md']
+          for f in required:
+              exists = Path(f).exists()
+              print(f'{'OK' if exists else 'MISSING'} {f}')
+              assert exists, f'{f} missing'
+          print('All required files present')
+          "

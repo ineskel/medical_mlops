@@ -23,6 +23,7 @@ Both fine-tuned models exceed SOTA. MobileNetV2 is deployed (higher AUC, 1.5× f
 
 ## Project Structure
 
+```
 medical_mlops/
 ├── data/ ← ChestMNIST auto-downloaded here (gitignored)
 ├── notebooks/
@@ -57,7 +58,7 @@ medical_mlops/
 ├── requirements.txt
 ├── Dockerfile
 └── README.md
-
+```
 ---
 
 ## Setup
@@ -76,7 +77,7 @@ python scripts/restore_checkpoints.py
 
 # 4. Generate hospital simulation images
 python scripts/export_test_images.py
-```
+````
 
 ---
 
