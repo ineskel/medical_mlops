@@ -1,0 +1,39 @@
+services:
+  api:
+    build: .
+    container_name: medical_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+      - ./test_images:/app/test_images
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      - mlflow
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    container_name: medical_dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./models:/app/models
+    depends_on:
+      - api
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.12.0
+    container_name: mlflow_server
+    ports:
+      - "5000:5000"
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:///mlflow.db
+      --default-artifact-root /mlruns
+    volumes:
+      - ./experiments:/mlflow

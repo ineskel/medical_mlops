@@ -1,0 +1,11 @@
+venv/
+.venv/
+mlruns/
+__pycache__/
+*.pth
+*.pt
+*.h5
+data/
+logs/
+.git
+notebooks/
