@@ -822,7 +822,7 @@ def render_site_static(hid: str):
     st.markdown("### 🗺️ Site Location & Equipment Profile")
     map_col, info_col = st.columns([2, 1])
     with map_col:
-        fig_map = go.Figure(go.Scattermapbox(
+        fig_map = go.Figure(go.Scattermap(
             lat=[cfg["lat"]], lon=[cfg["lon"]],
             mode="markers+text",
             marker=dict(size=18, color=cfg["color"], opacity=0.95),
@@ -831,8 +831,8 @@ def render_site_static(hid: str):
             hoverinfo="text",
         ))
         fig_map.update_layout(
-            mapbox=dict(style="carto-darkmatter",
-                        center=dict(lat=cfg["lat"], lon=cfg["lon"]), zoom=7),
+            map=dict(style="carto-darkmatter",          # ← was mapbox=dict(
+                    center=dict(lat=cfg["lat"], lon=cfg["lon"]), zoom=7),
             margin=dict(l=0, r=0, t=0, b=0), height=280, paper_bgcolor="#0e1117",
         )
         st.plotly_chart(fig_map, key=f"map_static_{hid}", use_container_width=True)
@@ -961,7 +961,7 @@ def render_site_live(hid: str):
                         key=f"radar_inspector_{hid}", use_container_width=True)
     st.divider()
 
-@st.fragment(run_every=None)  # never auto-refreshes
+@st.fragment(run_every=5)
 def render_action_panel(hid: str):
     # ── Action panel ───────────────────────────────────────────────────────────
     cfg = HOSPITALS[hid]                              # ← add this
@@ -1176,13 +1176,13 @@ def render_audit_log():
                                       order_by=["start_time DESC"], max_results=50)
             if runs:
                 rows = [{"Run": r.info.run_name,
-                         "Hospital":   r.data.tags.get("hospital_id", "—"),
-                         "Detector":   r.data.tags.get("detector", "—"),
-                         "Event":      r.data.tags.get("event", "—"),
-                         "Drift Type": r.data.tags.get("drift_type", "—"),
-                         "PHT":        r.data.metrics.get("pht_value", "—"),
-                         "Images":     r.data.metrics.get("image_count", "—"),
-                         "Run ID":     r.info.run_id[:8]} for r in runs]
+                    "Hospital":   r.data.tags.get("hospital_id","—"),
+                    "Detector":   r.data.tags.get("detector","—"),
+                    "Event":      r.data.tags.get("event","—"),
+                    "Drift Type": r.data.tags.get("drift_type","—"),
+                    "PHT":        str(round(r.data.metrics["pht_value"], 4)) if "pht_value" in r.data.metrics else "—",
+                    "Images":     str(int(r.data.metrics["image_count"])) if "image_count" in r.data.metrics else "—",
+                    "Run ID":     r.info.run_id[:8]} for r in runs]
                 st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
             else:
                 st.info("No drift events logged yet.")

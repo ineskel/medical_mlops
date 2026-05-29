@@ -1,13 +1,4 @@
----
-title: ChestMNIST API
-emoji: 🫁
-colorFrom: blue
-colorTo: green
-sdk: docker
-pinned: false
----
-
-# Topic 10 — MLOps Pipeline for Medical Model Deployment
+# MLOps Pipeline for Medical Model Deployment
 
 End-to-end MLOps pipeline for training, versioning, deploying, and **monitoring** a medical imaging model on **ChestMNIST** (14-class multi-label chest X-ray classification).
 
@@ -162,15 +153,6 @@ Simulates 4 hospitals with different acquisition profiles, streams images to the
 5. Operator clicks **Promote to Production** → alias moves to `production`
 
 Operator actions (retraining requests, recalibration, detector resets, promotions) are all logged to the `mlops-monitoring` MLflow experiment.
-
-### 4 — Docker (API only)
-
-```bash
-docker build -t chestmnist-api .
-docker run -p 8000:8000 chestmnist-api
-```
-
----
 
 ## MLOps Practices Implemented
 
