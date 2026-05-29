@@ -289,7 +289,7 @@ Action required:
   → Consider threshold recalibration
   → Flag for retraining if drift persists
 
-Dashboard: http://localhost:8501
+Dashboard: https://medicalmlops-bxmlrkzynprnjtmb2pkvjz.streamlit.app/
 MLflow UI: mlflow ui --backend-store-uri sqlite:///{ROOT}/experiments/mlflow.db
         """.strip()
         msg = MIMEText(body)
