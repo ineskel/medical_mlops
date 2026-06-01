@@ -132,8 +132,9 @@ Endpoints:
 - `POST /predict/{model_name}` — inference with tuned thresholds (`mobilenet` or `resnet`)
 - `POST /predict/ab` — randomised A/B routing between both models
 
-> The API is also deployed on HuggingFace Spaces (containerised via Docker):  
-> **https://yasmine0421-chestmnist-api.hf.space/docs**
+> **Live deployments:**  
+> API (Swagger): https://yasmine0421-chestmnist-api.hf.space/docs  
+> Monitoring dashboard: https://medicalmlops-bxmlrkzynprnjtmb2pkvjz.streamlit.app
 
 ### 3 — Monitoring dashboard
 
